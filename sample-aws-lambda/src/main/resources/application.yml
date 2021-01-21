@@ -1,0 +1,21 @@
+cloud:
+  aws:
+    credentials:
+      profileName:
+      instanceProfile: false
+    stack:
+      auto: false
+    region:
+      auto: false
+      static: ap-northeast-1
+spring:
+  cloud:
+    function:
+      scan:
+        packages: org.debugroom.sample.aws.lambda.app.function
+logging:
+  level:
+    com:
+      amazonaws:
+        util:
+          EC2MetadataUtils : error

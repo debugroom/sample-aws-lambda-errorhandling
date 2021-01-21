@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: Lambda for notify error function template with YAML - Depends On 4-cloudwatch-subscritipn-cfn.yml.
+
+Resources:
+  CloudWatchLogsSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ""
+          - - "/aws/lambda/"
+            - Fn::ImportValue: debugroom-sample-lambda-errorhandling-create-system-error-function-name
+      FilterPattern: "Exception"
+      DestinationArn:
+        Fn::ImportValue: debugroom-sample-lambda-errorhandling-notify-error-function-arn
+
+  NotifyErrorLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::ImportValue: debugroom-sample-lambda-errorhandling-notify-error-function-arn
+      Action: lambda:InvokeFunction
+      Principal: !Join [ ".", [ "logs", !Ref "AWS::Region", "amazonaws.com" ] ]
+      SourceAccount: !Ref AWS::AccountId

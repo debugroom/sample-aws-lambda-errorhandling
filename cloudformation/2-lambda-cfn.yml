@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: Lambda for chaning cognito user status function template with YAML - Depends On 1-s3-for-lambda-deploy-cfn.yml.
+
+Resources:
+  LambdaForCreateBusinessErrorFuntion:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::ImportValue: debugroom-sample-lambda-errorhandling-s3bucket
+        S3Key: sample-aws-lambda-0.0.1-SNAPSHOT-aws.jar
+      Handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
+      FunctionName: sample-aws-lambda-create-business-error-function
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: createBusinessErrorFunction
+      MemorySize: 1024
+      Runtime: java11
+      Timeout: 120
+      #      VpcConfig:
+      #        SecurityGroupIds:
+      #          - Fn::ImportValue: !Sub ${VPCName}-SecurityGroupLambda
+      #        SubnetIds:
+      #          - Fn::ImportValue: !Sub ${VPCName}-PrivateSubnet1
+      #          - Fn::ImportValue: !Sub ${VPCName}-PrivateSubnet2
+      Role: !GetAtt LambdaRole.Arn
+
+  LambdaForCreateSystemErrorFuntion:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::ImportValue: debugroom-sample-lambda-errorhandling-s3bucket
+        S3Key: sample-aws-lambda-0.0.1-SNAPSHOT-aws.jar
+      Handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
+      FunctionName: sample-aws-lambda-create-system-error-function
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: createSystemErrorFunction
+      MemorySize: 1024
+      Runtime: java11
+      Timeout: 120
+      #      VpcConfig:
+      #        SecurityGroupIds:
+      #          - Fn::ImportValue: !Sub ${VPCName}-SecurityGroupLambda
+      #        SubnetIds:
+      #          - Fn::ImportValue: !Sub ${VPCName}-PrivateSubnet1
+      #          - Fn::ImportValue: !Sub ${VPCName}-PrivateSubnet2
+      Role: !GetAtt LambdaRole.Arn
+
+  LambdaForNotifyErrorFuntion:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::ImportValue: debugroom-sample-lambda-errorhandling-s3bucket
+        S3Key: sample-aws-lambda-0.0.1-SNAPSHOT-aws.jar
+      Handler: org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest
+      FunctionName: sample-aws-lambda-notify-error-function
+      Environment:
+        Variables:
+          SPRING_CLOUD_FUNCTION_DEFINITION: notifyErrorFunction
+      MemorySize: 1024
+      Runtime: java11
+      Timeout: 120
+      #      VpcConfig:
+      #        SecurityGroupIds:
+      #          - Fn::ImportValue: !Sub ${VPCName}-SecurityGroupLambda
+      #        SubnetIds:
+      #          - Fn::ImportValue: !Sub ${VPCName}-PrivateSubnet1
+      #          - Fn::ImportValue: !Sub ${VPCName}-PrivateSubnet2
+      Role: !GetAtt LambdaRole.Arn
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+
+  CloudFormationAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: mynavi-microservice-cfn-cognito-lambda-CloudFormationAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "cloudformation:*"
+            Resource: "*"
+      Roles:
+        - !Ref LambdaRole
+
+  SSMAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: mynavi-microservice-cfn-cognito-lambda-SSMAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "cloudwatch:PutMetricData"
+              - "ds:CreateComputer"
+              - "ds:DescribeDirectories"
+              - "ec2:DescribeInstanceStatus"
+              - "logs:*"
+              - "ssm:*"
+              - "ec2messages:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "iam:CreateServiceLinkedRole"
+            Resource: "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*"
+            Condition:
+              StringLike:
+                iam:AWSServiceName: "ssm.amazonaws.com"
+          - Effect: Allow
+            Action:
+              - "iam:DeleteServiceLinkedRole"
+              - "iam:GetServiceLinkedRoleDeletionStatus"
+            Resource: "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*"
+          - Effect: Allow
+            Action:
+              - "ssmmessages:CreateControlChannel"
+              - "ssmmessages:CreateDataChannel"
+              - "ssmmessages:OpenControlChannel"
+              - "ssmmessages:OpenDataChannel"
+            Resource: "*"
+      Roles:
+        - !Ref LambdaRole
+
+Outputs:
+  LambdaForCreateBusinessErrorFuntion:
+    Description: Lambda function for occuring business error function.
+    Value: !Ref LambdaForCreateBusinessErrorFuntion
+    Export:
+      Name: debugroom-sample-lambda-errorhandling-create-business-error-function-name
+
+  LambdaForCreateBusinessErrorFuntionArn:
+    Description: Lambda function for occuring business error function.
+    Value: !GetAtt LambdaForCreateBusinessErrorFuntion.Arn
+    Export:
+      Name: debugroom-sample-lambda-errorhandling-create-business-error-function-arn
+
+  LambdaForCreateSystemErrorFuntion:
+    Description: Lambda function for occuring system error function.
+    Value: !Ref LambdaForCreateSystemErrorFuntion
+    Export:
+      Name: debugroom-sample-lambda-errorhandling-create-system-error-function-name
+
+  LambdaForCreateSystemErrorFuntionArn:
+    Description: Lambda function for occuring system error function.
+    Value: !GetAtt LambdaForCreateSystemErrorFuntion.Arn
+    Export:
+      Name: debugroom-sample-lambda-errorhandling-create-system-error-function-arn
+
+  LambdaForNotifyErrorFuntion:
+    Description: Lambda function for notifying error function.
+    Value: !Ref LambdaForNotifyErrorFuntion
+    Export:
+      Name: debugroom-sample-lambda-errorhandling-notify-error-function-name
+
+  LambdaForNotifiyErrorFuntionArn:
+    Description: Lambda function for notifying error function.
+    Value: !GetAtt LambdaForNotifyErrorFuntion.Arn
+    Export:
+      Name: debugroom-sample-lambda-errorhandling-notify-error-function-arn
+
